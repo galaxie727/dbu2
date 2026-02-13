@@ -1,0 +1,1024 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>デカブサ占い</title>
+  <style>
+    :root{
+      --bg:#f7f7f7;
+      --card:#ffffff;
+      --line:#e6e6e6;
+      --text:#111;
+      --muted:#666;
+      --muted2:#9a9a9a;
+      --accent:#ffd400;
+
+      --maxw:520px;
+      --btnH: 58px;
+      --safeB: env(safe-area-inset-bottom, 0px);
+    }
+    *{ box-sizing:border-box; }
+    body{
+      margin:0;
+      font-family: system-ui, -apple-system, "Hiragino Kaku Gothic ProN","Noto Sans JP","Yu Gothic", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    /* iOS Safari対策：hiddenは確実に消す */
+    [hidden]{ display:none !important; }
+
+    .wrap{
+      min-height: 100svh;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding: 18px;
+    }
+    .card{
+      width: min(var(--maxw), 100%);
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      overflow:hidden;
+      position: relative;
+    }
+    header{
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--line);
+      display:flex;
+      align-items:center;
+      justify-content: space-between;
+      gap:10px;
+    }
+    .headLeft{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      min-width:0;
+    }
+    .dot{
+      width:10px; height:10px;
+      border-radius:50%;
+      background: var(--accent);
+      flex:0 0 auto;
+    }
+    h1{
+      font-size:14px;
+      font-weight:700;
+      margin:0;
+      letter-spacing:.08em;
+      color:var(--muted);
+      white-space: nowrap;
+    }
+    #quota{
+      font-size: 12px;
+      color: var(--muted2);
+      letter-spacing: .08em;
+      white-space: nowrap;
+      user-select:none;
+    }
+
+    main{
+      padding: 18px;
+      min-height: 620px;
+      overflow: hidden; /* 「下にもう1枚」対策 */
+    }
+
+    /* ====== TOP ====== */
+    .top{
+      text-align:center;
+      padding: 22px 10px 26px;
+    }
+    .topTitle{
+      margin-top: 6px;
+      font-size: clamp(20px, 5.8vw, 30px);
+      font-weight: 700;
+      letter-spacing:.06em;
+      line-height:1.45;
+    }
+    .topCopy{
+      margin-top: 18px;
+      font-size: clamp(26px, 7.2vw, 40px);
+      font-weight: 800;
+      letter-spacing:.06em;
+      line-height:1.25;
+      white-space: pre-line;
+    }
+    .tapHint{
+      margin: 18px 0 0;
+      font-size: 13px;
+      color: rgba(0,0,0,0.22);
+      letter-spacing: .14em;
+      user-select:none;
+      animation: hintBlink 1.25s ease-in-out infinite;
+    }
+    @keyframes hintBlink{
+      0%,100%{ opacity: .20; }
+      50%    { opacity: .90; }
+    }
+    .hero{
+      margin: 28px auto 0;
+      width: min(260px, 70%);
+      display:flex;
+      justify-content:center;
+      align-items:flex-end;
+    }
+    #topImg{
+      width: 100%;
+      height:auto;
+      display:block;
+      transform-origin: 50% 100%;
+      animation: bob 3.6s ease-in-out infinite;
+      will-change: transform;
+      user-select:none;
+      pointer-events:none;
+    }
+    @keyframes bob{
+      0%,100%{ transform: translateY(0px) rotate(-0.2deg); }
+      50%    { transform: translateY(-6px) rotate(0.2deg); }
+    }
+    .miniNote{
+      margin-top: 14px;
+      font-size: 12px;
+      color: rgba(0,0,0,0.34);
+      letter-spacing: .06em;
+      line-height: 1.7;
+    }
+    .topTiny{
+      margin-top: 10px;
+      font-size: 12px;
+      color: rgba(0,0,0,0.30);
+      letter-spacing:.06em;
+      user-select:none;
+    }
+    .topTiny b{ color:#111; }
+
+    /* ====== FOOTER ====== */
+    .footer{
+      border-top: 1px solid var(--line);
+      padding: 14px 12px calc(14px + var(--safeB));
+      background:#fff;
+    }
+    button{
+      appearance:none;
+      border:1px solid rgba(0,0,0,0.08);
+      background:#fafafa;
+      color:#111;
+      border-radius: 18px;
+      padding: 14px 18px;
+      font-size:18px;
+      cursor:pointer;
+      transition: transform .12s ease, opacity .12s ease;
+      min-height: var(--btnH);
+    }
+    button:active{
+      transform: translateY(1px) scale(0.99);
+      background:#f2f2f2;
+    }
+    .primary{
+      border:none;
+      background:#111;
+      color:#fff;
+      border-radius: 28px;
+      letter-spacing:.12em;
+      width: min(320px, 92%);
+      margin: 0 auto;
+      display:block;
+    }
+    .locked button{
+      opacity:.35;
+      pointer-events:none;
+      cursor: default;
+    }
+
+    /* ====== GAME ====== */
+    .game{
+      display:flex;
+      flex-direction:column;
+      min-height: 620px;
+      text-align:center;
+    }
+    #progress{
+      font-size: 12px;
+      color: var(--muted2);
+      letter-spacing:.14em;
+      margin: 6px 0 0;
+      user-select:none;
+    }
+    #question{
+      margin: 22px 0 0;
+      font-size: clamp(20px, 6.0vw, 30px);
+      line-height: 1.45;
+      letter-spacing: .06em;
+      white-space: pre-line;
+      min-height: 3.2em;
+    }
+    .spacer{
+      flex: 1 1 auto;
+      min-height: 18px;
+    }
+    .charBottom{
+      display:flex;
+      justify-content:center;
+      align-items:flex-end;
+      padding: 6px 0 8px;
+    }
+    #charImg{
+      width: 240px;
+      height:auto;
+      user-select:none;
+      pointer-events:none;
+      transition: opacity 0.15s;
+    }
+    .answers{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      padding: 0 6px 6px;
+    }
+    .answers button{
+      width: 100%;
+      font-size: 18px;
+      border-radius: 18px;
+      background:#fff;
+      border:1px solid rgba(0,0,0,0.10);
+      min-height: 64px;
+    }
+
+    /* ====== RESULT ====== */
+    .result{
+      display:flex;
+      flex-direction:column;
+      min-height: 620px;
+      text-align:center;
+      padding: 6px 0 0;
+    }
+    .resultHead{
+      padding-top: 10px;
+    }
+    .resultTitle{
+      font-size: 18px;
+      margin: 0;
+      letter-spacing:.06em;
+      color:#111;
+    }
+    #percentBig{
+      margin-top: 16px;
+      font-size: 74px;
+      font-weight: 900;
+      letter-spacing: .04em;
+      line-height: 1;
+    }
+    .subCap{
+      margin-top: 10px;
+      color:#666;
+      letter-spacing:.12em;
+      font-size:12px;
+    }
+    #rankText{
+      margin-top: 10px;
+      font-size: 20px;
+      font-weight: 900;
+      letter-spacing:.08em;
+    }
+    #resultLines{
+      margin-top: 12px;
+      white-space: pre-line;
+      font-size: 16px;
+      line-height: 1.9;
+      color:#111;
+      padding: 0 12px;
+    }
+
+    /* 複数運 */
+    .stats{
+      margin: 16px auto 0;
+      width: min(420px, 92%);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 10px 12px;
+      background:#fff;
+      text-align:left;
+    }
+    .statRow{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      padding: 10px 6px;
+      border-bottom: 1px solid rgba(0,0,0,0.06);
+    }
+    .statRow:last-child{ border-bottom:none; }
+    .statName{
+      font-size: 14px;
+      font-weight: 800;
+      letter-spacing:.06em;
+      color:#111;
+      min-width: 5.5em;
+    }
+    .statRight{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      width: 100%;
+      justify-content:flex-end;
+    }
+    .bar{
+      flex: 1 1 auto;
+      height: 10px;
+      border-radius: 999px;
+      background: rgba(0,0,0,0.08);
+      overflow:hidden;
+      max-width: 220px;
+    }
+    .bar > i{
+      display:block;
+      height:100%;
+      width: 0%;
+      background: #111;
+      border-radius: 999px;
+      transition: width .6s ease;
+    }
+    .statVal{
+      font-size: 14px;
+      font-weight: 900;
+      letter-spacing:.04em;
+      width: 3.2em;
+      text-align:right;
+    }
+
+    .retryWrap{ padding: 18px 0 8px; }
+    .retryBtn{
+      width: min(320px, 92%);
+      border:none;
+      background:#333;
+      color:#fff;
+      border-radius: 14px;
+      font-size: 18px;
+      min-height: 56px;
+    }
+
+    /* ====== Modal ====== */
+    .modalBack{
+      position: fixed;
+      inset:0;
+      background: rgba(0,0,0,0.35);
+      display:none;
+      align-items:center;
+      justify-content:center;
+      padding: 18px;
+      z-index: 999;
+    }
+    .modalBack.on{ display:flex; }
+    .modal{
+      width: min(520px, 100%);
+      background:#fff;
+      border-radius: 14px;
+      border: 1px solid rgba(0,0,0,0.08);
+      overflow:hidden;
+    }
+    .modalHead{
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--line);
+      display:flex;
+      align-items:center;
+      justify-content: space-between;
+      gap:10px;
+    }
+    .modalTitle{
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing:.08em;
+      color: var(--muted);
+      margin:0;
+    }
+    .modalBody{
+      padding: 16px;
+      text-align:center;
+    }
+    .charStage{
+      margin-top: 6px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      gap:10px;
+    }
+    .navBtn{
+      width:44px;
+      min-width:44px;
+      height:44px;
+      padding:0;
+      border-radius: 14px;
+      font-size: 18px;
+    }
+    .charCard{
+      width: min(320px, 100%);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 12px 12px 14px;
+      background: #fff;
+    }
+    .charName{
+      font-weight: 900;
+      letter-spacing:.08em;
+      margin: 6px 0 8px;
+    }
+    .charDesc{
+      color: var(--muted2);
+      font-size: 12px;
+      line-height: 1.7;
+      letter-spacing:.04em;
+      min-height: 3.4em;
+    }
+    .charPreview{
+      width: 220px;
+      height:auto;
+      display:block;
+      margin: 0 auto;
+      user-select:none;
+      pointer-events:none;
+    }
+    .modalFoot{
+      border-top: 1px solid var(--line);
+      padding: 12px;
+      display:flex;
+      gap:10px;
+      justify-content:center;
+      align-items:center;
+      background:#fff;
+    }
+    .miniNote2{
+      margin-top: 10px;
+      font-size: 12px;
+      color: rgba(0,0,0,0.34);
+      letter-spacing: .06em;
+      line-height: 1.7;
+    }
+
+    .fadeLayer{
+      position: fixed;
+      inset: 0;
+      background: #fff;
+      opacity: 0;
+      pointer-events: none;
+      z-index: 1000;
+      transition: opacity .30s ease;
+    }
+    .fadeLayer.on{ opacity: 1; pointer-events: auto; }
+
+    @media (max-width: 420px){
+      main{ min-height: 560px; }
+      .game, .result{ min-height: 560px; }
+      #charImg{ width: 220px; }
+      #percentBig{ font-size: 64px; }
+      .answers button{ min-height: 62px; }
+    }
+    @media (prefers-reduced-motion: reduce){
+      #topImg, .tapHint{ animation:none!important; }
+      .fadeLayer{ transition:none; }
+      .bar > i{ transition:none; }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="fadeLayer" id="fade"></div>
+
+  <div class="wrap">
+    <div class="card">
+      <header>
+        <div class="headLeft">
+          <div class="dot"></div>
+          <h1>デカブサ占い</h1>
+        </div>
+        <div id="quota">今日はあと∞回</div>
+      </header>
+
+      <main id="main">
+
+        <!-- ===== TOP ===== -->
+        <section id="screenTop" class="top">
+          <div class="topTitle">あなたの運勢はどう？</div>
+          <div class="topCopy">98%の人が
+外れたと回答</div>
+          <div class="tapHint">タップして</div>
+
+          <div class="hero">
+            <!-- ★トップに出すキャラは「前回採用したキャラ」 -->
+            <img id="topImg" src="dekabusa_1.png" alt="トップキャラ">
+          </div>
+
+          <div class="topTiny">前回採用：<b id="lastPickName">---</b></div>
+          <div class="miniNote">※当たったと思っても外れています</div>
+        </section>
+
+        <!-- ===== GAME ===== -->
+        <section id="screenGame" class="game" hidden>
+          <div id="progress">1 / 7</div>
+          <div id="question">読み込み中</div>
+
+          <div class="spacer"></div>
+
+          <div class="charBottom">
+            <img id="charImg" src="" alt="キャラ">
+          </div>
+
+          <div class="answers" id="answers">
+            <button type="button" data-a="0">当たった</button>
+            <button type="button" data-a="1">外れた</button>
+            <button type="button" data-a="2">知らん</button>
+            <button type="button" data-a="3">気のせい</button>
+          </div>
+        </section>
+
+        <!-- ===== RESULT ===== -->
+        <section id="screenResult" class="result" hidden>
+          <div class="resultHead">
+            <p class="resultTitle">今日のあなたの運勢は</p>
+
+            <div id="percentBig">0%</div>
+
+            <div class="subCap">総合運</div>
+            <div id="rankText"></div>
+
+            <div id="resultLines"></div>
+
+            <div class="stats" id="statsBox" aria-label="詳細運勢">
+              <div class="statRow">
+                <div class="statName">金運</div>
+                <div class="statRight">
+                  <div class="bar"><i id="barMoney"></i></div>
+                  <div class="statVal" id="valMoney">0%</div>
+                </div>
+              </div>
+              <div class="statRow">
+                <div class="statName">恋愛運</div>
+                <div class="statRight">
+                  <div class="bar"><i id="barLove"></i></div>
+                  <div class="statVal" id="valLove">0%</div>
+                </div>
+              </div>
+              <div class="statRow">
+                <div class="statName">仕事運</div>
+                <div class="statRight">
+                  <div class="bar"><i id="barWork"></i></div>
+                  <div class="statVal" id="valWork">0%</div>
+                </div>
+              </div>
+              <div class="statRow">
+                <div class="statName">健康運</div>
+                <div class="statRight">
+                  <div class="bar"><i id="barHealth"></i></div>
+                  <div class="statVal" id="valHealth">0%</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="spacer"></div>
+
+          <div class="charBottom" style="padding-bottom:0;">
+            <!-- ★結果キャラはこれだけ（2体目が出ないように統一） -->
+            <img id="resultChar" src="" alt="キャラ（結果）" style="width:220px; height:auto; transition:opacity 0.15s;">
+          </div>
+
+          <div class="retryWrap">
+            <button class="retryBtn" id="btnRetry" type="button">もう一度占う</button>
+          </div>
+        </section>
+
+      </main>
+
+      <!-- ===== FOOTER ===== -->
+      <div class="footer" id="footerTop">
+        <button id="btnStart" class="primary" type="button">START</button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ===== 仲間紹介モーダル（必ず選択） ===== -->
+  <div class="modalBack" id="modalBack" aria-hidden="true">
+    <div class="modal" role="dialog" aria-modal="true" aria-label="仲間紹介">
+      <div class="modalHead">
+        <p class="modalTitle">仲間紹介</p>
+        <div style="font-size:12px;color:#9a9a9a;letter-spacing:.08em;">必ず選択</div>
+      </div>
+
+      <div class="modalBody">
+        <div class="charStage">
+          <button class="navBtn" id="btnPrev" type="button">‹</button>
+
+          <div class="charCard">
+            <img id="pickImg" class="charPreview" src="dekabusa_1.png" alt="">
+            <div class="charName" id="pickName">デカブサ</div>
+            <div class="charDesc" id="pickDesc">まあ…やるだけやれ。</div>
+          </div>
+
+          <button class="navBtn" id="btnNext" type="button">›</button>
+        </div>
+
+        <div class="miniNote2">
+          追加キャラは、表示と文言が変わるだけです。<br>
+          中身は変わりません。
+        </div>
+      </div>
+
+      <div class="modalFoot">
+        <button id="btnChoose" class="primary" type="button">このキャラにする</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // =======================
+    // 画面：hiddenで統一（iOS対策）
+    // =======================
+    const screenTop    = document.getElementById("screenTop");
+    const screenGame   = document.getElementById("screenGame");
+    const screenResult = document.getElementById("screenResult");
+    const footerTop    = document.getElementById("footerTop");
+    const fade         = document.getElementById("fade");
+    const mainEl       = document.getElementById("main");
+
+    function setScreen(name){
+      screenTop.hidden    = name !== "top";
+      screenGame.hidden   = name !== "game";
+      screenResult.hidden = name !== "result";
+      footerTop.hidden    = name !== "top";
+
+      // 「下にもう1枚」対策：必ず上に戻す
+      mainEl.scrollTop = 0;
+      window.scrollTo(0,0);
+    }
+
+    // =======================
+    // キャラ（全員：静→動→静→動→静→動→静 の7コマ）
+    // img2が無い場合でも同じ画像で成立する
+    // =======================
+    const CHAR_LIST = [
+      { id:"dekabusa", name:"デカブサ",   img1:"dekabusa_1.png",  img2:"dekabusa_2.png",  desc:"まあ…やるだけやれ。" },
+      { id:"lion",     name:"ライオン丸", img1:"lionmaru_1.png",  img2:"lionmaru_2.png",  desc:"……黙って見ろ。" },
+      { id:"namaken",  name:"ナマケン",   img1:"namaken_1.png",   img2:"namaken_2.png",   desc:"…うん…まあ…" },
+      { id:"tora",     name:"とらさん",   img1:"torasan_1.png",   img2:"torasan_2.png",   desc:"よし。次いくか。" },
+      { id:"kane",     name:"カンえもん", img1:"kanemon_1.png",   img2:"kanemon_2.png",   desc:"（入ってる）三次元だ。" },
+    ];
+
+    function getCharById(id){
+      return CHAR_LIST.find(c => c.id === id) || CHAR_LIST[0];
+    }
+
+    // =======================
+    // Top表示：前回採用したキャラ
+    // =======================
+    const topImg = document.getElementById("topImg");
+    const lastPickNameEl = document.getElementById("lastPickName");
+    const LS_LAST_PICK = "lastPickedCharId"; // 採用したキャラ
+    const LS_PICK_COUNTS = "pickCounts";     // 任意：採用回数
+
+    function loadPickCounts(){
+      try{
+        const raw = localStorage.getItem(LS_PICK_COUNTS);
+        if(!raw) return {};
+        const o = JSON.parse(raw);
+        return (o && typeof o === "object") ? o : {};
+      }catch{ return {}; }
+    }
+    function savePickCounts(o){
+      try{ localStorage.setItem(LS_PICK_COUNTS, JSON.stringify(o||{})); }catch{}
+    }
+
+    function applyTopCharacterFromStorage(){
+      const id = localStorage.getItem(LS_LAST_PICK);
+      const c = getCharById(id);
+      topImg.src = c.img1;
+      topImg.alt = c.name;
+      lastPickNameEl.textContent = id ? c.name : "（まだ）";
+    }
+
+    // =======================
+    // 質問
+    // =======================
+    const Q = [
+      "今日は様子見したい？",
+      "深く考えたくない？",
+      "とりあえず寝たい？",
+      "早く帰りたい？",
+      "今はその時じゃないと思う？",
+      "気にするだけ損だと思う？",
+      "今日は静かに過ごしたい？",
+      "何もしない日も価値があると思う？",
+      "急ぐ必要はないと思う？",
+      "なんとかなると思う？",
+      "今日は面倒を避けたい？",
+      "動くより止まる方が楽？",
+      "結局、気のせいだと思う？"
+    ];
+    function pick7(){
+      const copy = [...Q];
+      const out = [];
+      while(out.length < 7 && copy.length){
+        const j = Math.floor(Math.random()*copy.length);
+        out.push(copy.splice(j,1)[0]);
+      }
+      return out;
+    }
+
+    // =======================
+    // ランク＆文言
+    // ※ 50%だけ静穏運100% + Perfectly Average
+    // =======================
+    function getRank(p){
+      if(p <= 19) return "絶不調";
+      if(p <= 39) return "低調";
+      if(p <= 59) return "静穏";   // 表示は「静穏」
+      if(p <= 79) return "好調";
+      return "絶好調";
+    }
+
+    function buildLines(overall, rank){
+      if(overall === 50){
+        return [
+          "静穏運 100%",
+          "Perfectly Average",
+          "",
+          "今日は派手な事件は起きない。安心。",
+          "何も壊れていない日。"
+        ].join("\n");
+      }
+      const MAP = {
+        "絶不調": ["今日は運勢が良くない。","どうせ外れるから気にするな。"],
+        "低調":   ["今日は少し流れが悪い。","まあ、そんな日もある。"],
+        "静穏":   ["今日は普通。","特別ではないが問題もない。"],
+        "好調":   ["今日は悪くない。","少しだけ動いてもいいかもしれない。"],
+        "絶好調": ["今日はかなり良い流れ。","珍しい日だ。"]
+      };
+      return (MAP[rank] || ["今日はそんな日。","気にするな。"]).join("\n");
+    }
+
+    // =======================
+    // DOM
+    // =======================
+    const btnStart   = document.getElementById("btnStart");
+
+    const progressEl = document.getElementById("progress");
+    const questionEl = document.getElementById("question");
+    const charImg    = document.getElementById("charImg");
+    const answersEl  = document.getElementById("answers");
+
+    const percentBig = document.getElementById("percentBig");
+    const rankText   = document.getElementById("rankText");
+    const resultLines= document.getElementById("resultLines");
+    const resultChar = document.getElementById("resultChar");
+    const btnRetry   = document.getElementById("btnRetry");
+
+    const barMoney  = document.getElementById("barMoney");
+    const barLove   = document.getElementById("barLove");
+    const barWork   = document.getElementById("barWork");
+    const barHealth = document.getElementById("barHealth");
+
+    const valMoney  = document.getElementById("valMoney");
+    const valLove   = document.getElementById("valLove");
+    const valWork   = document.getElementById("valWork");
+    const valHealth = document.getElementById("valHealth");
+
+    // =======================
+    // モーダル
+    // =======================
+    const modalBack  = document.getElementById("modalBack");
+    const btnPrev    = document.getElementById("btnPrev");
+    const btnNext    = document.getElementById("btnNext");
+    const btnChoose  = document.getElementById("btnChoose");
+    const pickImg    = document.getElementById("pickImg");
+    const pickName   = document.getElementById("pickName");
+    const pickDesc   = document.getElementById("pickDesc");
+    let pickIndex = 0;
+
+    function openModal(){
+      pickIndex = 0;
+      renderPick();
+      modalBack.classList.add("on");
+      modalBack.setAttribute("aria-hidden","false");
+    }
+    function closeModal(){
+      modalBack.classList.remove("on");
+      modalBack.setAttribute("aria-hidden","true");
+    }
+    function renderPick(){
+      const c = CHAR_LIST[pickIndex];
+      pickImg.src = c.img1;
+      pickImg.alt = c.name;
+      pickName.textContent = c.name;
+      pickDesc.textContent = c.desc;
+    }
+
+    btnPrev.addEventListener("click", (e)=>{
+      e.stopPropagation();
+      pickIndex = (pickIndex - 1 + CHAR_LIST.length) % CHAR_LIST.length;
+      renderPick();
+    });
+    btnNext.addEventListener("click", (e)=>{
+      e.stopPropagation();
+      pickIndex = (pickIndex + 1) % CHAR_LIST.length;
+      renderPick();
+    });
+    modalBack.addEventListener("click", (e)=>{ e.stopPropagation(); }); // 外クリックで閉じない
+
+    // =======================
+    // 状態
+    // =======================
+    let selectedChar = null;
+    let questions = [];
+    let idx = 0;
+    let results = [];
+
+    function renderQuestion(){
+      progressEl.textContent = `${idx+1} / 7`;
+      questionEl.textContent = questions[idx];
+      charImg.style.opacity = 1;
+      charImg.src = selectedChar.img1; // 質問中：静止
+    }
+
+    function waitMs(ms){ return new Promise(r=>setTimeout(r, ms)); }
+
+    async function onAnswer(){
+      // 中身は完全ランダム
+      const v = Math.floor(Math.random() * 101);
+      results.push(v);
+
+      answersEl.classList.add("locked");
+      await waitMs(220);
+      answersEl.classList.remove("locked");
+
+      idx++;
+      if(idx >= 7){
+        await finish();
+      }else{
+        renderQuestion();
+      }
+    }
+
+    answersEl.addEventListener("click", (e)=>{
+      const btn = e.target.closest("button");
+      if(!btn) return;
+      onAnswer();
+    });
+
+    // =======================
+    // %カウント
+    // =======================
+    function countUpPercent(el, target, durationMs){
+      return new Promise((resolve) => {
+        const start = performance.now();
+        const to = Math.max(0, Math.min(100, Math.floor(target)));
+        function tick(now){
+          const t = Math.min(1, (now - start) / durationMs);
+          const eased = 1 - Math.pow(1 - t, 3);
+          const v = Math.round(to * eased);
+          el.textContent = `${v}%`;
+          if(t < 1) requestAnimationFrame(tick);
+          else resolve();
+        }
+        requestAnimationFrame(tick);
+      });
+    }
+
+    // =======================
+    // 7コマ：静→動→静→動→静→動→静
+    // =======================
+    async function playSequence(imgEl){
+      const img1 = selectedChar.img1;
+      const img2 = selectedChar.img2 || selectedChar.img1;
+      const sequence = [img1, img2, img1, img2, img1, img2, img1];
+
+      await waitMs(500);
+      for(let i=0; i<sequence.length; i++){
+        imgEl.style.opacity = 0;
+        await waitMs(150);
+        imgEl.src = sequence[i];
+        imgEl.style.opacity = 1;
+        await waitMs(300);
+      }
+    }
+
+    // =======================
+    // 詳細運（総合に寄せる）
+    // =======================
+    function randNear(base, spread){
+      const v = base + Math.floor((Math.random()*2 - 1) * spread);
+      return Math.max(0, Math.min(100, v));
+    }
+    function setStat(barEl, valEl, p){
+      valEl.textContent = `${p}%`;
+      barEl.style.width = `${p}%`;
+    }
+
+    // =======================
+    // 採用を保存（＝前回採用キャラとしてトップに出す）
+    // 今の仕様では「結果が出た＝そのキャラを採用した」扱い
+    // =======================
+    function saveAdoptedChar(charId){
+      try{ localStorage.setItem(LS_LAST_PICK, charId); }catch{}
+
+      // 任意：採用回数も増やす
+      const counts = loadPickCounts();
+      counts[charId] = (counts[charId] || 0) + 1;
+      savePickCounts(counts);
+    }
+
+    // =======================
+    // 結果
+    // =======================
+    async function finish(){
+      setScreen("result");
+
+      // 結果キャラ：1体だけ
+      resultChar.style.opacity = 1;
+      resultChar.src = selectedChar.img1;
+
+      const overall = Math.floor(results.reduce((a,b)=>a+b,0) / results.length);
+
+      percentBig.textContent = "0%";
+      rankText.textContent = "";
+      resultLines.textContent = "";
+
+      // 詳細運
+      const money  = randNear(overall, 18);
+      const love   = randNear(overall, 22);
+      const work   = randNear(overall, 16);
+      const health = randNear(overall, 14);
+
+      [barMoney,barLove,barWork,barHealth].forEach(b=>b.style.width="0%");
+      [valMoney,valLove,valWork,valHealth].forEach(v=>v.textContent="0%");
+
+      await countUpPercent(percentBig, overall, 950);
+
+      const rank = getRank(overall);
+      rankText.textContent = rank;
+      resultLines.textContent = buildLines(overall, rank);
+
+      await waitMs(200);
+      setStat(barMoney,  valMoney,  money);
+      await waitMs(110);
+      setStat(barLove,   valLove,   love);
+      await waitMs(110);
+      setStat(barWork,   valWork,   work);
+      await waitMs(110);
+      setStat(barHealth, valHealth, health);
+
+      // コマ送り
+      await playSequence(resultChar);
+
+      // ★採用保存（トップ表示用）
+      saveAdoptedChar(selectedChar.id);
+      applyTopCharacterFromStorage();
+    }
+
+    // =======================
+    // STARTフロー（必ずキャラ選択）
+    // =======================
+    function goStartFlow(){
+      fade.classList.add("on");
+      setTimeout(()=>{
+        fade.classList.remove("on");
+        openModal();
+      }, 220);
+    }
+
+    btnStart.addEventListener("click", (e)=>{ e.stopPropagation(); goStartFlow(); });
+    screenTop.addEventListener("click", ()=>{ goStartFlow(); }, { passive:true });
+
+    btnChoose.addEventListener("click", (e)=>{
+      e.stopPropagation();
+      selectedChar = CHAR_LIST[pickIndex];
+      closeModal();
+
+      questions = pick7();
+      idx = 0;
+      results = [];
+
+      fade.classList.add("on");
+      setTimeout(()=>{
+        fade.classList.remove("on");
+        setScreen("game");
+        renderQuestion();
+      }, 220);
+    });
+
+    // =======================
+    // もう一度占う
+    // =======================
+    btnRetry.addEventListener("click", ()=>{
+      setScreen("top");
+    });
+
+    // =======================
+    // 起動
+    // =======================
+    applyTopCharacterFromStorage();
+    setScreen("top");
+  </script>
+</body>
+</html>
