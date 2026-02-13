@@ -25,8 +25,6 @@
       background: var(--bg);
       color: var(--text);
     }
-
-    /* iOS Safari対策：hiddenは確実に消す */
     [hidden]{ display:none !important; }
 
     .wrap{
@@ -83,10 +81,11 @@
     main{
       padding: 18px;
       min-height: 620px;
-      overflow: hidden; /* 「下にもう1枚」対策 */
+      overflow:auto;
+      -webkit-overflow-scrolling: touch;
     }
 
-    /* ====== TOP ====== */
+    /* ===== TOP ===== */
     .top{
       text-align:center;
       padding: 22px 10px 26px;
@@ -132,8 +131,6 @@
       transform-origin: 50% 100%;
       animation: bob 3.6s ease-in-out infinite;
       will-change: transform;
-      user-select:none;
-      pointer-events:none;
     }
     @keyframes bob{
       0%,100%{ transform: translateY(0px) rotate(-0.2deg); }
@@ -146,16 +143,8 @@
       letter-spacing: .06em;
       line-height: 1.7;
     }
-    .topTiny{
-      margin-top: 10px;
-      font-size: 12px;
-      color: rgba(0,0,0,0.30);
-      letter-spacing:.06em;
-      user-select:none;
-    }
-    .topTiny b{ color:#111; }
 
-    /* ====== FOOTER ====== */
+    /* ===== FOOTER (TOP) ===== */
     .footer{
       border-top: 1px solid var(--line);
       padding: 14px 12px calc(14px + var(--safeB));
@@ -193,7 +182,7 @@
       cursor: default;
     }
 
-    /* ====== GAME ====== */
+    /* ===== GAME ===== */
     .game{
       display:flex;
       flex-direction:column;
@@ -247,7 +236,7 @@
       min-height: 64px;
     }
 
-    /* ====== RESULT ====== */
+    /* ===== RESULT ===== */
     .result{
       display:flex;
       flex-direction:column;
@@ -255,9 +244,7 @@
       text-align:center;
       padding: 6px 0 0;
     }
-    .resultHead{
-      padding-top: 10px;
-    }
+    .resultHead{ padding-top: 10px; }
     .resultTitle{
       font-size: 18px;
       margin: 0;
@@ -349,18 +336,42 @@
       text-align:right;
     }
 
-    .retryWrap{ padding: 18px 0 8px; }
-    .retryBtn{
-      width: min(320px, 92%);
+    .actions{
+      padding: 14px 0 8px;
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+      align-items:center;
+      justify-content:center;
+    }
+    .adoptBtn{
+      width: min(360px, 92%);
       border:none;
-      background:#333;
+      background:#111;
       color:#fff;
       border-radius: 14px;
       font-size: 18px;
       min-height: 56px;
+      letter-spacing:.06em;
+    }
+    .nextBtn{
+      width: min(360px, 92%);
+      border:1px solid rgba(0,0,0,0.10);
+      background:#fff;
+      color:#111;
+      border-radius: 14px;
+      font-size: 18px;
+      min-height: 56px;
+    }
+    .smallHint{
+      font-size: 12px;
+      color: rgba(0,0,0,0.40);
+      letter-spacing:.06em;
+      line-height: 1.7;
+      padding: 0 12px;
     }
 
-    /* ====== Modal ====== */
+    /* ===== Modal ===== */
     .modalBack{
       position: fixed;
       inset:0;
@@ -437,8 +448,6 @@
       height:auto;
       display:block;
       margin: 0 auto;
-      user-select:none;
-      pointer-events:none;
     }
     .modalFoot{
       border-top: 1px solid var(--line);
@@ -448,13 +457,6 @@
       justify-content:center;
       align-items:center;
       background:#fff;
-    }
-    .miniNote2{
-      margin-top: 10px;
-      font-size: 12px;
-      color: rgba(0,0,0,0.34);
-      letter-spacing: .06em;
-      line-height: 1.7;
     }
 
     .fadeLayer{
@@ -506,12 +508,10 @@
           <div class="tapHint">タップして</div>
 
           <div class="hero">
-            <!-- ★トップに出すキャラは「前回採用したキャラ」 -->
-            <img id="topImg" src="dekabusa_1.png" alt="トップキャラ">
+            <img id="topImg" src="dekabusa.png" alt="トップキャラ">
           </div>
 
-          <div class="topTiny">前回採用：<b id="lastPickName">---</b></div>
-          <div class="miniNote">※当たったと思っても外れています</div>
+          <div class="miniNote" id="topMini">※当たったと思っても外れています</div>
         </section>
 
         <!-- ===== GAME ===== -->
@@ -580,18 +580,19 @@
           <div class="spacer"></div>
 
           <div class="charBottom" style="padding-bottom:0;">
-            <!-- ★結果キャラはこれだけ（2体目が出ないように統一） -->
             <img id="resultChar" src="" alt="キャラ（結果）" style="width:220px; height:auto; transition:opacity 0.15s;">
           </div>
 
-          <div class="retryWrap">
-            <button class="retryBtn" id="btnRetry" type="button">もう一度占う</button>
+          <div class="actions">
+            <button class="adoptBtn" id="btnAdopt" type="button">採用して明日に保存</button>
+            <button class="nextBtn" id="btnNextChar" type="button">次のキャラを占う</button>
+            <div class="smallHint" id="forceHint" hidden>※最後まで行ったら、最後の結果が採用になります（ボタンは押してね）</div>
           </div>
         </section>
 
       </main>
 
-      <!-- ===== FOOTER ===== -->
+      <!-- ===== FOOTER (TOP) ===== -->
       <div class="footer" id="footerTop">
         <button id="btnStart" class="primary" type="button">START</button>
       </div>
@@ -612,7 +613,7 @@
           <button class="navBtn" id="btnPrev" type="button">‹</button>
 
           <div class="charCard">
-            <img id="pickImg" class="charPreview" src="dekabusa_1.png" alt="">
+            <img id="pickImg" class="charPreview" src="dekabusa.png" alt="">
             <div class="charName" id="pickName">デカブサ</div>
             <div class="charDesc" id="pickDesc">まあ…やるだけやれ。</div>
           </div>
@@ -620,7 +621,7 @@
           <button class="navBtn" id="btnNext" type="button">›</button>
         </div>
 
-        <div class="miniNote2">
+        <div class="miniNote">
           追加キャラは、表示と文言が変わるだけです。<br>
           中身は変わりません。
         </div>
@@ -633,9 +634,32 @@
   </div>
 
   <script>
-    // =======================
-    // 画面：hiddenで統一（iOS対策）
-    // =======================
+    // =========================
+    // Storage Keys
+    // =========================
+    const KEY_STATE  = "dekaFortune_state_v1";    // 今日の進行/使用済み
+    const KEY_ADOPT  = "dekaFortune_adopt_v1";    // 明日用に採用された結果（確定）
+    const KEY_PENDING= "dekaFortune_pending_v1";  // 親切②：押し忘れ救済用（仮採用）
+    const KEY_COUNTS = "dekaFortune_pickCounts_v1";
+    const KEY_LASTTOP= "dekaFortune_lastTopChar_v1";
+
+    // =========================
+    // Utils: dates
+    // =========================
+    function pad2(n){ return String(n).padStart(2,"0"); }
+    function ymd(d){
+      return `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`;
+    }
+    function tomorrowYmd(){
+      const d = new Date();
+      d.setDate(d.getDate()+1);
+      return ymd(d);
+    }
+    const TODAY = ymd(new Date());
+
+    // =========================
+    // Screen control (hidden統一)
+    // =========================
     const screenTop    = document.getElementById("screenTop");
     const screenGame   = document.getElementById("screenGame");
     const screenResult = document.getElementById("screenResult");
@@ -648,59 +672,24 @@
       screenGame.hidden   = name !== "game";
       screenResult.hidden = name !== "result";
       footerTop.hidden    = name !== "top";
-
-      // 「下にもう1枚」対策：必ず上に戻す
       mainEl.scrollTop = 0;
       window.scrollTo(0,0);
     }
 
-    // =======================
-    // キャラ（全員：静→動→静→動→静→動→静 の7コマ）
-    // img2が無い場合でも同じ画像で成立する
-    // =======================
+    // =========================
+    // Characters (img1/img2で動き)
+    // =========================
     const CHAR_LIST = [
-      { id:"dekabusa", name:"デカブサ",   img1:"dekabusa_1.png",  img2:"dekabusa_2.png",  desc:"まあ…やるだけやれ。" },
-      { id:"lion",     name:"ライオン丸", img1:"lionmaru_1.png",  img2:"lionmaru_2.png",  desc:"……黙って見ろ。" },
-      { id:"namaken",  name:"ナマケン",   img1:"namaken_1.png",   img2:"namaken_2.png",   desc:"…うん…まあ…" },
-      { id:"tora",     name:"とらさん",   img1:"torasan_1.png",   img2:"torasan_2.png",   desc:"よし。次いくか。" },
-      { id:"kane",     name:"カンえもん", img1:"kanemon_1.png",   img2:"kanemon_2.png",   desc:"（入ってる）三次元だ。" },
+      { id:"dekabusa", name:"デカブサ",   img1:"dekabusa_1.png",  img2:"dekabusa_2.png", desc:"まあ…やるだけやれ。" },
+      { id:"lion",     name:"ライオン丸", img1:"lionmaru_1.png",  img2:"lionmaru_2.png", desc:"……黙って見ろ。" },
+      { id:"namaken",  name:"ナマケン",   img1:"namaken_1.png",   img2:"namaken_2.png",  desc:"…うん…まあ…" },
+      { id:"tora",     name:"とらさん",   img1:"torasan_1.png",   img2:"torasan_2.png",  desc:"よし。次いくか。" },
+      { id:"kane",     name:"カンえもん", img1:"kanemon_1.png",   img2:"kanemon_2.png",  desc:"（入ってる）三次元だ。" },
     ];
 
-    function getCharById(id){
-      return CHAR_LIST.find(c => c.id === id) || CHAR_LIST[0];
-    }
-
-    // =======================
-    // Top表示：前回採用したキャラ
-    // =======================
-    const topImg = document.getElementById("topImg");
-    const lastPickNameEl = document.getElementById("lastPickName");
-    const LS_LAST_PICK = "lastPickedCharId"; // 採用したキャラ
-    const LS_PICK_COUNTS = "pickCounts";     // 任意：採用回数
-
-    function loadPickCounts(){
-      try{
-        const raw = localStorage.getItem(LS_PICK_COUNTS);
-        if(!raw) return {};
-        const o = JSON.parse(raw);
-        return (o && typeof o === "object") ? o : {};
-      }catch{ return {}; }
-    }
-    function savePickCounts(o){
-      try{ localStorage.setItem(LS_PICK_COUNTS, JSON.stringify(o||{})); }catch{}
-    }
-
-    function applyTopCharacterFromStorage(){
-      const id = localStorage.getItem(LS_LAST_PICK);
-      const c = getCharById(id);
-      topImg.src = c.img1;
-      topImg.alt = c.name;
-      lastPickNameEl.textContent = id ? c.name : "（まだ）";
-    }
-
-    // =======================
-    // 質問
-    // =======================
+    // =========================
+    // Questions
+    // =========================
     const Q = [
       "今日は様子見したい？",
       "深く考えたくない？",
@@ -726,19 +715,19 @@
       return out;
     }
 
-    // =======================
-    // ランク＆文言
-    // ※ 50%だけ静穏運100% + Perfectly Average
-    // =======================
+    // =========================
+    // Rank + lines
+    // =========================
     function getRank(p){
       if(p <= 19) return "絶不調";
       if(p <= 39) return "低調";
-      if(p <= 59) return "静穏";   // 表示は「静穏」
+      if(p <= 60) return "静穏";   // ★40〜60を静穏ゾーン
       if(p <= 79) return "好調";
       return "絶好調";
     }
 
     function buildLines(overall, rank){
+      // ★50%だけ特別
       if(overall === 50){
         return [
           "静穏運 100%",
@@ -758,10 +747,12 @@
       return (MAP[rank] || ["今日はそんな日。","気にするな。"]).join("\n");
     }
 
-    // =======================
+    // =========================
     // DOM
-    // =======================
+    // =========================
     const btnStart   = document.getElementById("btnStart");
+    const topImg     = document.getElementById("topImg");
+    const topMini    = document.getElementById("topMini");
 
     const progressEl = document.getElementById("progress");
     const questionEl = document.getElementById("question");
@@ -772,7 +763,6 @@
     const rankText   = document.getElementById("rankText");
     const resultLines= document.getElementById("resultLines");
     const resultChar = document.getElementById("resultChar");
-    const btnRetry   = document.getElementById("btnRetry");
 
     const barMoney  = document.getElementById("barMoney");
     const barLove   = document.getElementById("barLove");
@@ -784,9 +774,11 @@
     const valWork   = document.getElementById("valWork");
     const valHealth = document.getElementById("valHealth");
 
-    // =======================
-    // モーダル
-    // =======================
+    const btnAdopt   = document.getElementById("btnAdopt");
+    const btnNextChar= document.getElementById("btnNextChar");
+    const forceHint  = document.getElementById("forceHint");
+
+    // Modal
     const modalBack  = document.getElementById("modalBack");
     const btnPrev    = document.getElementById("btnPrev");
     const btnNext    = document.getElementById("btnNext");
@@ -813,7 +805,6 @@
       pickName.textContent = c.name;
       pickDesc.textContent = c.desc;
     }
-
     btnPrev.addEventListener("click", (e)=>{
       e.stopPropagation();
       pickIndex = (pickIndex - 1 + CHAR_LIST.length) % CHAR_LIST.length;
@@ -824,11 +815,145 @@
       pickIndex = (pickIndex + 1) % CHAR_LIST.length;
       renderPick();
     });
-    modalBack.addEventListener("click", (e)=>{ e.stopPropagation(); }); // 外クリックで閉じない
+    modalBack.addEventListener("click", (e)=>{ e.stopPropagation(); });
 
-    // =======================
-    // 状態
-    // =======================
+    // =========================
+    // State (1日1キャラ1回)
+    // =========================
+    function loadState(){
+      try{
+        const s = JSON.parse(localStorage.getItem(KEY_STATE) || "null");
+        if(!s || s.date !== TODAY){
+          return { date:TODAY, used: {} }; // used: { charId: true }
+        }
+        return s;
+      }catch{
+        return { date:TODAY, used: {} };
+      }
+    }
+    function saveState(s){
+      localStorage.setItem(KEY_STATE, JSON.stringify(s));
+    }
+    let state = loadState();
+
+    function isUsed(charId){ return !!state.used[charId]; }
+    function markUsed(charId){
+      state.used[charId] = true;
+      saveState(state);
+    }
+    function remainingCount(){
+      return CHAR_LIST.filter(c=>!isUsed(c.id)).length;
+    }
+
+    // =========================
+    // Top character display (採用したキャラをトップに出す)
+    // =========================
+    function setTopFromStorage(){
+      const lastId = localStorage.getItem(KEY_LASTTOP) || "dekabusa";
+      const c = CHAR_LIST.find(x=>x.id===lastId) || CHAR_LIST[0];
+      topImg.src = c.img1;
+      topImg.alt = c.name;
+    }
+    setTopFromStorage();
+
+    // =========================
+    // Fortune generation
+    // =========================
+    function randNear(base, spread){
+      const v = base + Math.floor((Math.random()*2 - 1) * spread);
+      return Math.max(0, Math.min(100, v));
+    }
+    function countUpPercent(el, target, durationMs){
+      return new Promise((resolve) => {
+        const start = performance.now();
+        const to = Math.max(0, Math.min(100, Math.floor(target)));
+        function tick(now){
+          const t = Math.min(1, (now - start) / durationMs);
+          const eased = 1 - Math.pow(1 - t, 3);
+          const v = Math.round(to * eased);
+          el.textContent = `${v}%`;
+          if(t < 1) requestAnimationFrame(tick);
+          else resolve();
+        }
+        requestAnimationFrame(tick);
+      });
+    }
+    function setStat(barEl, valEl, p){
+      valEl.textContent = `${p}%`;
+      barEl.style.width = `${p}%`;
+    }
+    function waitMs(ms){ return new Promise(r=>setTimeout(r, ms)); }
+
+    // 7コマ：静→動→静→動→静→動→静
+    async function playSequence(imgEl, charObj){
+      const img1 = charObj.img1;
+      const img2 = charObj.img2 || charObj.img1;
+      const sequence = [img1, img2, img1, img2, img1, img2, img1];
+
+      await waitMs(450);
+      for(const src of sequence){
+        imgEl.style.opacity = 0;
+        await waitMs(140);
+        imgEl.src = src;
+        imgEl.style.opacity = 1;
+        await waitMs(300);
+      }
+    }
+
+    // =========================
+    // Pending & Adopt
+    // =========================
+    // pendingは「押し忘れ救済」用。画面を離れたら採用に昇格（親切②）。
+    function setPending(pendingObj){
+      localStorage.setItem(KEY_PENDING, JSON.stringify(pendingObj));
+    }
+    function getPending(){
+      try{ return JSON.parse(localStorage.getItem(KEY_PENDING) || "null"); }catch{ return null; }
+    }
+    function clearPending(){
+      localStorage.removeItem(KEY_PENDING);
+    }
+
+    // 採用（確定）→ 明日用として保存、採用回数/トップ更新
+    function finalizeAdopt(obj){
+      // obj: { date, adoptFor, charId, charName, overall, rank, money,love,work,health, lines }
+      localStorage.setItem(KEY_ADOPT, JSON.stringify(obj));
+
+      // 採用回数
+      let counts = {};
+      try{ counts = JSON.parse(localStorage.getItem(KEY_COUNTS) || "{}"); }catch{}
+      counts[obj.charId] = (counts[obj.charId] || 0) + 1;
+      localStorage.setItem(KEY_COUNTS, JSON.stringify(counts));
+
+      // トップに出すキャラ
+      localStorage.setItem(KEY_LASTTOP, obj.charId);
+
+      clearPending();
+      setTopFromStorage();
+    }
+
+    // 親切②：離脱/非表示になったら pending を採用に昇格
+    function autoFinalizeIfPending(){
+      const p = getPending();
+      if(!p) return;
+      // 同日のpendingだけ確定（古いのは捨てる）
+      if(p.date === TODAY){
+        finalizeAdopt(p);
+      }else{
+        clearPending();
+      }
+    }
+    window.addEventListener("beforeunload", autoFinalizeIfPending);
+    document.addEventListener("visibilitychange", ()=>{
+      if(document.visibilityState === "hidden") autoFinalizeIfPending();
+    });
+
+    // 起動時にも pending があれば確定（押し忘れ救済）
+    autoFinalizeIfPending();
+
+    // =========================
+    // Game flow
+    // =========================
     let selectedChar = null;
     let questions = [];
     let idx = 0;
@@ -838,13 +963,10 @@
       progressEl.textContent = `${idx+1} / 7`;
       questionEl.textContent = questions[idx];
       charImg.style.opacity = 1;
-      charImg.src = selectedChar.img1; // 質問中：静止
+      charImg.src = selectedChar.img1;
     }
 
-    function waitMs(ms){ return new Promise(r=>setTimeout(r, ms)); }
-
     async function onAnswer(){
-      // 中身は完全ランダム
       const v = Math.floor(Math.random() * 101);
       results.push(v);
 
@@ -863,137 +985,171 @@
     answersEl.addEventListener("click", (e)=>{
       const btn = e.target.closest("button");
       if(!btn) return;
+      if(answersEl.classList.contains("locked")) return;
       onAnswer();
     });
 
-    // =======================
-    // %カウント
-    // =======================
-    function countUpPercent(el, target, durationMs){
-      return new Promise((resolve) => {
-        const start = performance.now();
-        const to = Math.max(0, Math.min(100, Math.floor(target)));
-        function tick(now){
-          const t = Math.min(1, (now - start) / durationMs);
-          const eased = 1 - Math.pow(1 - t, 3);
-          const v = Math.round(to * eased);
-          el.textContent = `${v}%`;
-          if(t < 1) requestAnimationFrame(tick);
-          else resolve();
-        }
-        requestAnimationFrame(tick);
-      });
+    // 「結果」表示後、採用ボタンを押すまで次へ進めない（強制採用でも同じ）
+    let canProceed = false;
+    function setResultButtonsLocked(lock){
+      canProceed = !lock;
+      btnNextChar.disabled = lock;
+      btnNextChar.style.opacity = lock ? 0.35 : 1;
     }
 
-    // =======================
-    // 7コマ：静→動→静→動→静→動→静
-    // =======================
-    async function playSequence(imgEl){
-      const img1 = selectedChar.img1;
-      const img2 = selectedChar.img2 || selectedChar.img1;
-      const sequence = [img1, img2, img1, img2, img1, img2, img1];
-
-      await waitMs(500);
-      for(let i=0; i<sequence.length; i++){
-        imgEl.style.opacity = 0;
-        await waitMs(150);
-        imgEl.src = sequence[i];
-        imgEl.style.opacity = 1;
-        await waitMs(300);
-      }
-    }
-
-    // =======================
-    // 詳細運（総合に寄せる）
-    // =======================
-    function randNear(base, spread){
-      const v = base + Math.floor((Math.random()*2 - 1) * spread);
-      return Math.max(0, Math.min(100, v));
-    }
-    function setStat(barEl, valEl, p){
-      valEl.textContent = `${p}%`;
-      barEl.style.width = `${p}%`;
-    }
-
-    // =======================
-    // 採用を保存（＝前回採用キャラとしてトップに出す）
-    // 今の仕様では「結果が出た＝そのキャラを採用した」扱い
-    // =======================
-    function saveAdoptedChar(charId){
-      try{ localStorage.setItem(LS_LAST_PICK, charId); }catch{}
-
-      // 任意：採用回数も増やす
-      const counts = loadPickCounts();
-      counts[charId] = (counts[charId] || 0) + 1;
-      savePickCounts(counts);
-    }
-
-    // =======================
-    // 結果
-    // =======================
     async function finish(){
-      setScreen("result");
+      // 使用済みにする（1日1キャラ1回）
+      markUsed(selectedChar.id);
 
-      // 結果キャラ：1体だけ
-      resultChar.style.opacity = 1;
-      resultChar.src = selectedChar.img1;
-
+      // 結果生成
       const overall = Math.floor(results.reduce((a,b)=>a+b,0) / results.length);
+      const rank = getRank(overall);
 
-      percentBig.textContent = "0%";
-      rankText.textContent = "";
-      resultLines.textContent = "";
-
-      // 詳細運
       const money  = randNear(overall, 18);
       const love   = randNear(overall, 22);
       const work   = randNear(overall, 16);
       const health = randNear(overall, 14);
 
+      // 画面
+      setScreen("result");
+
+      // UI初期化
+      resultChar.style.opacity = 1;
+      resultChar.src = selectedChar.img1;
+
+      percentBig.textContent = "0%";
+      rankText.textContent = "";
+      resultLines.textContent = "";
+
       [barMoney,barLove,barWork,barHealth].forEach(b=>b.style.width="0%");
       [valMoney,valLove,valWork,valHealth].forEach(v=>v.textContent="0%");
 
-      await countUpPercent(percentBig, overall, 950);
+      // 採用ボタン必須：次へはロック
+      setResultButtonsLocked(true);
 
-      const rank = getRank(overall);
+      // 最後の1キャラなら「強制採用」ヒントを出す（でも押すのは必須）
+      forceHint.hidden = remainingCount() !== 0;
+
+      // アニメ
+      await countUpPercent(percentBig, overall, 900);
       rankText.textContent = rank;
       resultLines.textContent = buildLines(overall, rank);
 
-      await waitMs(200);
+      await waitMs(140);
       setStat(barMoney,  valMoney,  money);
-      await waitMs(110);
+      await waitMs(90);
       setStat(barLove,   valLove,   love);
-      await waitMs(110);
+      await waitMs(90);
       setStat(barWork,   valWork,   work);
-      await waitMs(110);
+      await waitMs(90);
       setStat(barHealth, valHealth, health);
 
-      // コマ送り
-      await playSequence(resultChar);
+      // 7コマ（全キャラ）
+      await playSequence(resultChar, selectedChar);
 
-      // ★採用保存（トップ表示用）
-      saveAdoptedChar(selectedChar.id);
-      applyTopCharacterFromStorage();
+      // ★親切②：ここで「仮採用（pending）」として自動保存しておく
+      const pendingObj = {
+        date: TODAY,
+        adoptFor: tomorrowYmd(), // 明日用
+        charId: selectedChar.id,
+        charName: selectedChar.name,
+        overall, rank,
+        money, love, work, health,
+        lines: resultLines.textContent
+      };
+      setPending(pendingObj);
     }
 
-    // =======================
-    // STARTフロー（必ずキャラ選択）
-    // =======================
+    // 採用ボタン：pending → 採用確定
+    btnAdopt.addEventListener("click", ()=>{
+      const p = getPending();
+      if(!p) return;
+
+      finalizeAdopt(p);
+
+      // 次へ進める
+      setResultButtonsLocked(false);
+
+      // もし残り0なら、次ボタンを「トップへ」に切り替え
+      if(remainingCount() === 0){
+        btnNextChar.textContent = "トップへ";
+      }else{
+        btnNextChar.textContent = "次のキャラを占う";
+      }
+    });
+
+    // 次のキャラを占う / トップへ
+    btnNextChar.addEventListener("click", ()=>{
+      if(!canProceed) return; // 採用押してないなら進めない
+
+      if(remainingCount() === 0){
+        setScreen("top");
+        return;
+      }
+      // 次の占い（別キャラを選ばせる）
+      openModalFiltered();
+    });
+
+    // =========================
+    // Modal: 未使用キャラだけ見せる
+    // =========================
+    let modalPool = [];
+    function openModalFiltered(){
+      modalPool = CHAR_LIST.filter(c=>!isUsed(c.id));
+      if(modalPool.length === 0){
+        // 全部使ったならトップ
+        setScreen("top");
+        return;
+      }
+      pickIndex = 0;
+      renderPickFromPool();
+      modalBack.classList.add("on");
+      modalBack.setAttribute("aria-hidden","false");
+    }
+    function renderPickFromPool(){
+      const c = modalPool[pickIndex];
+      pickImg.src = c.img1;
+      pickImg.alt = c.name;
+      pickName.textContent = c.name;
+      pickDesc.textContent = c.desc;
+    }
+    function closeModalFiltered(){
+      modalBack.classList.remove("on");
+      modalBack.setAttribute("aria-hidden","true");
+    }
+    btnPrev.addEventListener("click", (e)=>{
+      if(modalPool.length){
+        e.stopPropagation();
+        pickIndex = (pickIndex - 1 + modalPool.length) % modalPool.length;
+        renderPickFromPool();
+      }
+    });
+    btnNext.addEventListener("click", (e)=>{
+      if(modalPool.length){
+        e.stopPropagation();
+        pickIndex = (pickIndex + 1) % modalPool.length;
+        renderPickFromPool();
+      }
+    });
+
+    // START → キャラ選択（未使用のみ）
     function goStartFlow(){
       fade.classList.add("on");
       setTimeout(()=>{
         fade.classList.remove("on");
-        openModal();
+        openModalFiltered();
       }, 220);
     }
-
     btnStart.addEventListener("click", (e)=>{ e.stopPropagation(); goStartFlow(); });
     screenTop.addEventListener("click", ()=>{ goStartFlow(); }, { passive:true });
 
+    // モーダル決定
     btnChoose.addEventListener("click", (e)=>{
       e.stopPropagation();
-      selectedChar = CHAR_LIST[pickIndex];
-      closeModal();
+      const chosen = modalPool.length ? modalPool[pickIndex] : CHAR_LIST[pickIndex];
+      selectedChar = chosen;
+
+      closeModalFiltered();
 
       questions = pick7();
       idx = 0;
@@ -1007,18 +1163,18 @@
       }, 220);
     });
 
-    // =======================
-    // もう一度占う
-    // =======================
-    btnRetry.addEventListener("click", ()=>{
-      setScreen("top");
-    });
-
-    // =======================
-    // 起動
-    // =======================
-    applyTopCharacterFromStorage();
+    // =========================
+    // Init
+    // =========================
     setScreen("top");
+
+    // top: 直近採用キャラを表示
+    setTopFromStorage();
+
+    // もし今日はもう全部使い切ってたらヒントを変える（任意）
+    if(remainingCount() === 0){
+      topMini.textContent = "※今日はもう占い切った。明日また来い。";
+    }
   </script>
 </body>
 </html>
