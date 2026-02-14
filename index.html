@@ -26,7 +26,7 @@
       color: var(--text);
     }
 
-    /* iOS Safari対策：hiddenを確実に消す */
+    /* iOS Safari: hidden が効かず残像が出る対策 */
     [hidden]{ display:none !important; }
 
     .wrap{
@@ -83,6 +83,7 @@
     main{
       padding: 18px;
       min-height: 620px;
+      overflow: hidden;
     }
 
     /* ====== TOP ====== */
@@ -171,12 +172,26 @@
       background:#111;
       color:#fff;
       border-radius: 28px;
-      letter-spacing:.12em;
-      width: min(320px, 92%);
+      letter-spacing:.10em;
+      width: min(340px, 92%);
       margin: 0 auto;
       display:block;
     }
+    .secondary{
+      border:1px solid rgba(0,0,0,0.12);
+      background:#fff;
+      color:#111;
+      border-radius: 18px;
+      width: min(340px, 92%);
+      margin: 10px auto 0;
+      display:block;
+    }
     .locked button{
+      opacity:.35;
+      pointer-events:none;
+      cursor: default;
+    }
+    button[disabled]{
       opacity:.35;
       pointer-events:none;
       cursor: default;
@@ -272,6 +287,14 @@
       font-weight: 900;
       letter-spacing:.08em;
     }
+    #seiOnHint{
+      margin-top: 8px;
+      font-size: 18px;
+      font-weight: 900;
+      letter-spacing:.06em;
+      color:#111;
+      min-height: 1.2em;
+    }
     #resultLines{
       margin-top: 12px;
       white-space: pre-line;
@@ -338,15 +361,19 @@
       text-align:right;
     }
 
-    .retryWrap{ padding: 18px 0 8px; }
-    .retryBtn{
-      width: min(320px, 92%);
-      border:none;
-      background:#333;
-      color:#fff;
-      border-radius: 14px;
-      font-size: 18px;
-      min-height: 56px;
+    .resultFoot{
+      padding: 14px 12px calc(14px + var(--safeB));
+      border-top: 1px solid var(--line);
+      background:#fff;
+    }
+    .notice{
+      margin: 0 0 10px;
+      font-size: 12px;
+      color: rgba(0,0,0,0.42);
+      letter-spacing: .08em;
+      line-height: 1.6;
+      text-align:center;
+      min-height: 1.6em;
     }
 
     /* ====== Modal ====== */
@@ -486,10 +513,10 @@
           <div class="tapHint">タップして</div>
 
           <div class="hero">
-            <img id="topImg" src="dekabusa.png" alt="デカブサ">
+            <img id="topImg" src="dekabusa_1.png" alt="デカブサ">
           </div>
 
-          <div class="miniNote">※当たったと思っても外れています</div>
+          <div class="miniNote" id="topNote">※当たったと思っても外れています</div>
         </section>
 
         <!-- ===== GAME ===== -->
@@ -520,6 +547,7 @@
 
             <div class="subCap">総合運</div>
             <div id="rankText"></div>
+            <div id="seiOnHint"></div>
 
             <div id="resultLines"></div>
 
@@ -561,8 +589,12 @@
             <img id="resultChar" src="" alt="キャラ（結果）" style="width:220px; height:auto; transition:opacity 0.15s;">
           </div>
 
-          <div class="retryWrap">
-            <button class="retryBtn" id="btnRetry" type="button">もう一度占う</button>
+          <!-- ★結果画面ボタン（採用/次キャラ） -->
+          <div class="resultFoot">
+            <p class="notice" id="resultNotice"></p>
+            <button class="primary" id="btnAdopt" type="button">採用して明日に保存</button>
+            <button class="secondary" id="btnNextChar" type="button">次のキャラで占う</button>
+            <button class="secondary" id="btnRetry" type="button">もう一度占う</button>
           </div>
         </section>
 
@@ -589,7 +621,7 @@
           <button class="navBtn" id="btnPrev" type="button">‹</button>
 
           <div class="charCard">
-            <img id="pickImg" class="charPreview" src="dekabusa.png" alt="">
+            <img id="pickImg" class="charPreview" src="dekabusa_1.png" alt="">
             <div class="charName" id="pickName">デカブサ</div>
             <div class="charDesc" id="pickDesc">まあ…やるだけやれ。</div>
           </div>
@@ -604,7 +636,7 @@
       </div>
 
       <div class="modalFoot">
-        <button id="btnChoose" class="primary" type="button">このキャラにする</button>
+        <button id="btnChoose" class="primary" type="button">このキャラで占う</button>
       </div>
     </div>
   </div>
@@ -618,29 +650,25 @@
     const fade         = document.getElementById("fade");
     const mainEl       = document.getElementById("main");
 
-    // 画面切替は hidden で統一（iOSで下に残る問題を潰す）
     function setScreen(name){
       screenTop.hidden    = name !== "top";
       screenGame.hidden   = name !== "game";
       screenResult.hidden = name !== "result";
       footerTop.hidden    = name !== "top";
-
-      // スクロール事故防止
       mainEl.scrollTop = 0;
       window.scrollTo(0,0);
     }
 
-    // ========= 仲間（画像名） =========
-    // 2枚必須：静(1) / 動(2)
+    // ========= 仲間（静止1枚 + 動き1枚） =========
     const CHAR_LIST = [
-      { id:"dekabusa", name:"デカブサ",   img1:"dekabusa_1.png", img2:"dekabusa_2.png", desc:"まあ…やるだけやれ。" },
-      { id:"lion",     name:"ライオン丸", img1:"lionmaru_1.png", img2:"lionmaru_2.png", desc:"……黙って見ろ。" },
-      { id:"namaken",  name:"ナマケン",   img1:"namaken_1.png",  img2:"namaken_2.png",  desc:"…うん…まあ…" },
-      { id:"tora",     name:"とらさん",   img1:"torasan_1.png",  img2:"torasan_2.png",  desc:"よし。次いくか。" },
-      { id:"kane",     name:"カンえもん", img1:"kanemon_1.png",  img2:"kanemon_2.png",  desc:"（入ってる）三次元だ。" },
+      { id:"dekabusa", name:"デカブサ",   img1:"dekabusa_1.png",  img2:"dekabusa_2.png", desc:"まあ…やるだけやれ。" },
+      { id:"lion",     name:"ライオン丸", img1:"lionmaru_1.png",  img2:"lionmaru_2.png", desc:"……黙って見ろ。" },
+      { id:"namaken",  name:"ナマケン",   img1:"namaken_1.png",   img2:"namaken_2.png",  desc:"…うん…まあ…" },
+      { id:"tora",     name:"とらさん",   img1:"torasan_1.png",   img2:"torasan_2.png",  desc:"よし。次いくか。" },
+      { id:"kane",     name:"カンえもん", img1:"kanemon_1.png",   img2:"kanemon_2.png",  desc:"（入ってる）三次元だ。" },
     ];
 
-    // ========= 質問プール =========
+    // ========= 質問 =========
     const Q = [
       "今日は様子見したい？",
       "深く考えたくない？",
@@ -656,7 +684,6 @@
       "動くより止まる方が楽？",
       "結局、気のせいだと思う？"
     ];
-
     function pick7(){
       const copy = [...Q];
       const out = [];
@@ -667,58 +694,48 @@
       return out;
     }
 
-    // ========= 結果ランク =========
+    // ========= ランク =========
     function getRank(p){
       if(p <= 19) return "絶不調";
       if(p <= 39) return "低調";
-      if(p <= 59) return "静穏";
+      if(p <= 59) return "静穏";   // 表示は静穏
       if(p <= 79) return "好調";
       return "絶好調";
     }
 
-    // ★A：45〜55%のときだけ「静穏運 ◯%」表示（50%は特別）
-    // 静穏運 = 100 - |overall-50|*2
+    // ========= 静穏運%（45〜55で表示 / 50=100%） =========
+    // 例) 49 -> 98, 54 -> 92, 55 -> 90
+    function calcSeionPercent(overall){
+      const diff = Math.abs(overall - 50);
+      return Math.max(0, Math.min(100, 100 - diff * 2));
+    }
+    function shouldShowSeion(overall){
+      return overall >= 45 && overall <= 55;
+    }
+
+    // 50%だけ特別ライン
     function buildLines(overall, rank){
-      if(rank === "静穏"){
-        const seion = 100 - Math.abs(overall - 50) * 2;
-
-        // 45〜55%のみ静穏運表示
-        if(overall >= 45 && overall <= 55){
-          if(overall === 50){
-            return [
-              "静穏運 100%",
-              "Perfectly Average",
-              "",
-              "今日は派手な事件は起きない。安心。",
-              "何も壊れていない日。"
-            ].join("\n");
-          }
-          return [
-            `静穏運 ${seion}%`,
-            "",
-            "今日は普通。",
-            "特別ではないが問題もない。"
-          ].join("\n");
-        }
-
-        // 40〜44 / 56〜59 は普通の静穏
+      if(overall === 50){
         return [
-          "今日は普通。",
-          "特別ではないが問題もない。"
+          "Perfectly Average",
+          "",
+          "今日は派手な事件は起きない。安心。",
+          "何も壊れていない日。"
         ].join("\n");
       }
-
       const MAP = {
         "絶不調": ["今日は運勢が良くない。","どうせ外れるから気にするな。"],
         "低調":   ["今日は少し流れが悪い。","まあ、そんな日もある。"],
+        "静穏":   ["今日は普通。","特別ではないが問題もない。"],
         "好調":   ["今日は悪くない。","少しだけ動いてもいいかもしれない。"],
         "絶好調": ["今日はかなり良い流れ。","珍しい日だ。"]
       };
-      return (MAP[rank] || ["今日はそんな日。"]).join("\n");
+      return (MAP[rank] || ["今日はそんな日。","気にするな。"]).join("\n");
     }
 
     // ========= DOM =========
     const btnStart   = document.getElementById("btnStart");
+    const topNote    = document.getElementById("topNote");
 
     const progressEl = document.getElementById("progress");
     const questionEl = document.getElementById("question");
@@ -727,9 +744,14 @@
 
     const percentBig = document.getElementById("percentBig");
     const rankText   = document.getElementById("rankText");
+    const seiOnHint  = document.getElementById("seiOnHint");
     const resultLines= document.getElementById("resultLines");
     const resultChar = document.getElementById("resultChar");
+
+    const btnAdopt   = document.getElementById("btnAdopt");
+    const btnNextChar= document.getElementById("btnNextChar");
     const btnRetry   = document.getElementById("btnRetry");
+    const resultNotice = document.getElementById("resultNotice");
 
     const barMoney  = document.getElementById("barMoney");
     const barLove   = document.getElementById("barLove");
@@ -768,7 +790,6 @@
       pickName.textContent = c.name;
       pickDesc.textContent = c.desc;
     }
-
     btnPrev.addEventListener("click", (e)=>{
       e.stopPropagation();
       pickIndex = (pickIndex - 1 + CHAR_LIST.length) % CHAR_LIST.length;
@@ -779,22 +800,86 @@
       pickIndex = (pickIndex + 1) % CHAR_LIST.length;
       renderPick();
     });
-    modalBack.addEventListener("click", (e)=>{ e.stopPropagation(); });
+    modalBack.addEventListener("click", (e)=>{ e.stopPropagation(); }); // 外クリックで閉じない
+
+    // ========= 日付キー =========
+    function pad2(n){ return String(n).padStart(2,"0"); }
+    function ymd(d){
+      return `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`;
+    }
+    function todayKey(){
+      const t = new Date();
+      return ymd(t);
+    }
+    function tomorrowKey(){
+      const t = new Date();
+      t.setDate(t.getDate()+1);
+      return ymd(t);
+    }
+
+    // ========= localStorage keys =========
+    function usedKey(){ return `dekabusa_used_${todayKey()}`; }
+    function savedKey(){ return `dekabusa_saved_${tomorrowKey()}`; }
+
+    function loadUsed(){
+      try{
+        const raw = localStorage.getItem(usedKey());
+        const arr = raw ? JSON.parse(raw) : [];
+        return Array.isArray(arr) ? arr : [];
+      }catch(e){ return []; }
+    }
+    function saveUsed(arr){
+      localStorage.setItem(usedKey(), JSON.stringify(arr));
+    }
+    function markUsed(charId){
+      const used = loadUsed();
+      if(!used.includes(charId)){
+        used.push(charId);
+        saveUsed(used);
+      }
+    }
+    function remainingCount(){
+      const used = loadUsed();
+      return CHAR_LIST.filter(c=>!used.includes(c.id)).length;
+    }
+
+    function loadSavedTomorrow(){
+      try{
+        const raw = localStorage.getItem(savedKey());
+        return raw ? JSON.parse(raw) : null;
+      }catch(e){ return null; }
+    }
+    function saveTomorrow(payload){
+      localStorage.setItem(savedKey(), JSON.stringify(payload));
+    }
+
+    function refreshTopNote(){
+      const saved = loadSavedTomorrow();
+      if(saved){
+        topNote.textContent = `明日の運勢（保存済み）：${saved.overall}% / ${saved.rank}（${saved.charName}）`;
+      }else{
+        topNote.textContent = "※当たったと思っても外れています";
+      }
+    }
 
     // ========= ゲーム状態 =========
     let selectedChar = null;
+    let selectedCharIndex = 0;
     let questions = [];
     let idx = 0;
     let results = [];
+
+    // 今回出た結果（採用/破棄判断用）
+    let lastResultPayload = null;
+
+    function waitMs(ms){ return new Promise(r=>setTimeout(r, ms)); }
 
     function renderQuestion(){
       progressEl.textContent = `${idx+1} / 7`;
       questionEl.textContent = questions[idx];
       charImg.style.opacity = 1;
-      charImg.src = selectedChar.img1; // 質問中：下に静止画
+      charImg.src = selectedChar.img1;
     }
-
-    function waitMs(ms){ return new Promise(r=>setTimeout(r, ms)); }
 
     async function onAnswer(){
       const v = Math.floor(Math.random() * 101);
@@ -811,7 +896,6 @@
         renderQuestion();
       }
     }
-
     answersEl.addEventListener("click", (e)=>{
       const btn = e.target.closest("button");
       if(!btn) return;
@@ -835,17 +919,16 @@
       });
     }
 
-    // ========= キャラコマ送り：7コマ（静→動→静→動→静→動→静） =========
-    async function playSequence(imgEl){
+    // ========= 7コマ：静→動→静→動→静→動→静 =========
+    async function playSequence7(imgEl){
       const img1 = selectedChar.img1;
       const img2 = selectedChar.img2 || selectedChar.img1;
-
       const sequence = [img1, img2, img1, img2, img1, img2, img1];
 
       await waitMs(500);
       for(let i=0; i<sequence.length; i++){
         imgEl.style.opacity = 0;
-        await waitMs(150);
+        await waitMs(140);
         imgEl.src = sequence[i];
         imgEl.style.opacity = 1;
         await waitMs(320);
@@ -856,24 +939,32 @@
       const v = base + Math.floor((Math.random()*2 - 1) * spread);
       return Math.max(0, Math.min(100, v));
     }
-
     function setStat(barEl, valEl, p){
       valEl.textContent = `${p}%`;
       barEl.style.width = `${p}%`;
     }
 
+    // ========= 結果表示 =========
     async function finish(){
       setScreen("result");
 
+      // 初期化
+      percentBig.textContent = "0%";
+      rankText.textContent = "";
+      seiOnHint.textContent = "";
+      resultLines.textContent = "";
+      resultNotice.textContent = "";
+      btnNextChar.disabled = false;
+
+      // キャラ
       resultChar.style.opacity = 1;
       resultChar.src = selectedChar.img1;
 
+      // 総合
       const overall = Math.floor(results.reduce((a,b)=>a+b,0) / results.length);
+      const rank = getRank(overall);
 
-      percentBig.textContent = "0%";
-      rankText.textContent = "";
-      resultLines.textContent = "";
-
+      // 詳細運
       const money  = randNear(overall, 18);
       const love   = randNear(overall, 22);
       const work   = randNear(overall, 16);
@@ -884,11 +975,24 @@
 
       await countUpPercent(percentBig, overall, 950);
 
-      const rank = getRank(overall);
       rankText.textContent = rank;
 
+      // ★静穏運表示ルール
+      if(shouldShowSeion(overall)){
+        if(overall === 50){
+          seiOnHint.textContent = "静穏運 100%";
+        }else{
+          const seion = calcSeionPercent(overall);
+          seiOnHint.textContent = `静穏運 ${seion}%`;
+        }
+      }else{
+        seiOnHint.textContent = ""; // それ以外は出さない
+      }
+
+      // 本文
       resultLines.textContent = buildLines(overall, rank);
 
+      // 詳細運（遅延）
       await waitMs(200);
       setStat(barMoney,  valMoney,  money);
       await waitMs(120);
@@ -898,8 +1002,88 @@
       await waitMs(120);
       setStat(barHealth, valHealth, health);
 
-      await playSequence(resultChar);
+      // 7コマ
+      await playSequence7(resultChar);
+
+      // 採用用ペイロード保存（まだlocalStorageには入れない）
+      lastResultPayload = {
+        savedFor: tomorrowKey(),
+        charId: selectedChar.id,
+        charName: selectedChar.name,
+        overall,
+        rank,
+        seionShown: shouldShowSeion(overall),
+        seionPercent: shouldShowSeion(overall) ? (overall===50 ? 100 : calcSeionPercent(overall)) : null,
+        money, love, work, health,
+        at: Date.now()
+      };
+
+      // 今日のこのキャラは「占った」扱い（次のキャラ制御に使う）
+      markUsed(selectedChar.id);
+
+      // 次キャラが残ってるか
+      const rem = remainingCount();
+      if(rem <= 0){
+        // ★強制採用：でも「採用して保存」を押させる（次キャラを無効化）
+        btnNextChar.disabled = true;
+        resultNotice.textContent = "最後のキャラです。採用して明日に保存してください。";
+      }else{
+        resultNotice.textContent = `残り ${rem} キャラ（採用しなくても次へ進めます）`;
+      }
     }
+
+    // ========= 1回分開始（キャラ指定） =========
+    function startRunWithCharIndex(i){
+      selectedCharIndex = i;
+      selectedChar = CHAR_LIST[selectedCharIndex];
+
+      questions = pick7();
+      idx = 0;
+      results = [];
+      lastResultPayload = null;
+
+      fade.classList.add("on");
+      setTimeout(()=>{
+        fade.classList.remove("on");
+        setScreen("game");
+        renderQuestion();
+      }, 220);
+    }
+
+    // ========= 次の未使用キャラを探す =========
+    function nextUnusedCharIndex(fromIndex){
+      const used = loadUsed();
+      for(let step=1; step<=CHAR_LIST.length; step++){
+        const j = (fromIndex + step) % CHAR_LIST.length;
+        if(!used.includes(CHAR_LIST[j].id)) return j;
+      }
+      return null;
+    }
+
+    // ========= 採用して明日に保存 =========
+    btnAdopt.addEventListener("click", ()=>{
+      if(!lastResultPayload) return;
+      saveTomorrow(lastResultPayload);
+      refreshTopNote();
+      setScreen("top");
+    });
+
+    // ========= 次のキャラで占う（採用しなくてもOK） =========
+    btnNextChar.addEventListener("click", ()=>{
+      const j = nextUnusedCharIndex(selectedCharIndex);
+      if(j === null){
+        // 念のため：全消化なら採用を促す
+        btnNextChar.disabled = true;
+        resultNotice.textContent = "最後のキャラです。採用して明日に保存してください。";
+        return;
+      }
+      startRunWithCharIndex(j);
+    });
+
+    // ========= もう一度占う（=トップへ） =========
+    btnRetry.addEventListener("click", ()=>{
+      setScreen("top");
+    });
 
     // ========= STARTフロー（必ずキャラ選択） =========
     function goStartFlow(){
@@ -914,27 +1098,20 @@
 
     btnChoose.addEventListener("click", (e)=>{
       e.stopPropagation();
-      selectedChar = CHAR_LIST[pickIndex];
       closeModal();
 
-      questions = pick7();
-      idx = 0;
-      results = [];
-
-      fade.classList.add("on");
-      setTimeout(()=>{
-        fade.classList.remove("on");
-        setScreen("game");
-        renderQuestion();
-      }, 220);
-    });
-
-    // ========= もう一度占う =========
-    btnRetry.addEventListener("click", ()=>{
-      setScreen("top");
+      // 今日すでにそのキャラを占ってたら、次の未使用キャラに自動で回す
+      const used = loadUsed();
+      let startIndex = pickIndex;
+      if(used.includes(CHAR_LIST[startIndex].id)){
+        const j = nextUnusedCharIndex(startIndex);
+        if(j !== null) startIndex = j;
+      }
+      startRunWithCharIndex(startIndex);
     });
 
     // ========= 起動 =========
+    refreshTopNote();
     setScreen("top");
   </script>
 </body>
